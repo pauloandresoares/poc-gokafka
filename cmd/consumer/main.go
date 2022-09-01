@@ -7,7 +7,7 @@ import (
 
 func main() {
 	configMap := &kafka.ConfigMap{
-		"bootstrap.servers": "gokafka_kafka_1:9092",
+		"bootstrap.servers": "kafka:9092",
 		"client.id":         "goapp-consumer",
 		"group.id":          "goapp-group",
 		"auto.offset.reset": "earliest",

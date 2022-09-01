@@ -3,21 +3,36 @@ version: "3"
 services:
   app:
     build: .
-    container_name: gokafka
+    container_name: gokafka-app
     volumes:
       - .:/go/src/
+    networks:
+      - internal    
     extra_hosts:
       - "host.docker.internal:172.17.0.1"
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - 2181:2181
+      - 2182:2182
+    healthcheck:
+      test: echo srvr | nc zookeeper 2181 || exit 1
+      retries: 20
+      interval: 10s
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      
+    networks:
+      - internal
     extra_hosts:
       - "host.docker.internal:172.17.0.1"
 
   kafka:
     image: confluentinc/cp-kafka:latest
+    container_name: kafka
     depends_on:
       - zookeeper
     ports:
@@ -31,8 +46,11 @@ services:
       KAFKA_LISTENERS: INTERNAL://:9092,OUTSIDE://:9094
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://host.docker.internal:9094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+    networks:
+      - internal
     extra_hosts:
       - "host.docker.internal:172.17.0.1"
+  
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:latest
@@ -46,5 +64,10 @@ services:
       CONTROL_CENTER_REPLICATION_FACTOR: 1
       CONTROL_CENTER_CONNECT_CLUSTER: http://app-connect:8083
       PORT: 9021
+    networks:
+      - internal
     extra_hosts:
       - "host.docker.internal:172.17.0.1"
+
+networks:
+  internal:      
